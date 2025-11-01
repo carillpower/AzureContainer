@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Container Apps Architecture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .subtitle {
+            text-align: center;
+            margin-bottom: 30px;
+            opacity: 0.8;
+            font-size: 1.1em;
+        }
+        
+        .architecture-diagram {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .environment-box {
+            border: 3px solid #4a9eff;
+            border-radius: 12px;
+            padding: 25px;
+            background: rgba(74, 158, 255, 0.1);
+            position: relative;
+            min-height: 500px;
+        }
+        
+        .environment-title {
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #4a9eff;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        .layer {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        
+        .layer-vnet {
+            border-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+        }
+        
+        .layer-infrastructure {
+            border-color: #4ecdc4;
+            background: rgba(78, 205, 196, 0.1);
+        }
+        
+        .layer-apps {
+            border-color: #ffe66d;
+            background: rgba(255, 230, 109, 0.1);
+        }
+        
+        .layer-ingress {
+            border-color: #a8e6cf;
+            background: rgba(168, 230, 207, 0.1);
+        }
+        
+        .layer-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .component {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+        
+        .component:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            background: rgba(255,255,255,0.15);
+        }
+        
+        .component-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #ffe66d;
+        }
+        
+        .component-desc {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1em;
+        }
+        
+        .tab:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .tab.active {
+            background: #4a9eff;
+            box-shadow: 0 4px 15px rgba(74, 158, 255, 0.4);
+        }
+        
+        .content-section {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        .content-section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .feature-card {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .feature-title {
+            color: #4a9eff;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .feature-content {
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
+        
+        .example-apps {
+            margin-top: 30px;
+        }
+        
+        .app-card {
+            background: linear-gradient(135deg, rgba(74, 158, 255, 0.2), rgba(168, 230, 207, 0.2));
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .app-title {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            color: #ffe66d;
+        }
+        
+        .app-description {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .app-architecture {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .arch-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #a8e6cf;
+        }
+        
+        .service-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .service-tag {
+            background: rgba(74, 158, 255, 0.3);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            border: 1px solid rgba(74, 158, 255, 0.5);
+        }
+        
+        .info-box {
+            background: rgba(255, 230, 109, 0.1);
+            border-left: 4px solid #ffe66d;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        
+        .info-box strong {
+            color: #ffe66d;
+        }
+        
+        ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        
+        li {
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>☁️ Azure Container Apps Environment</h1>
+        <p class="subtitle">Interactive Architecture Guide & Application Examples</p>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('architecture')">🏗️ Architecture</button>
+            <button class="tab" onclick="showTab('components')">🔧 Components</button>
+            <button class="tab" onclick="showTab('examples')">💡 Application Examples</button>
+        </div>
+        
+        <!-- Architecture Tab -->
+        <div id="architecture" class="content-section active">
+            <div class="architecture-diagram">
+                <div class="environment-box">
+                    <div class="environment-title">CONTAINER APPS ENVIRONMENT</div>
+                    
+                    <div class="layer layer-ingress">
+                        <div class="layer-title">🌐 Ingress Layer</div>
+                        <div class="component-grid">
+                            <div class="component">
+                                <div class="component-name">Load Balancer</div>
+                                <div class="component-desc">Automatic HTTPS & SSL termination</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Custom Domains</div>
+                                <div class="component-desc">Bring your own domain names</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Traffic Splitting</div>
+                                <div class="component-desc">Revision-based routing</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="layer layer-apps">
+                        <div class="layer-title">📦 Container Apps Layer</div>
+                        <div class="component-grid">
+                            <div class="component">
+                                <div class="component-name">Frontend App</div>
+                                <div class="component-desc">React/Angular/Vue SPA</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">API Service</div>
+                                <div class="component-desc">RESTful backend APIs</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Background Jobs</div>
+                                <div class="component-desc">Event-driven workers</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Auth Service</div>
+                                <div class="component-desc">Identity & authentication</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="layer layer-infrastructure">
+                        <div class="layer-title">⚙️ Infrastructure & Platform Services</div>
+                        <div class="component-grid">
+                            <div class="component">
+                                <div class="component-name">KEDA Scalers</div>
+                                <div class="component-desc">Event-driven autoscaling</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Dapr Runtime</div>
+                                <div class="component-desc">Service invocation & state</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Service Discovery</div>
+                                <div class="component-desc">Internal DNS & routing</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Log Analytics</div>
+                                <div class="component-desc">Centralized logging</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="layer layer-vnet">
+                        <div class="layer-title">🔒 Network & Security Layer</div>
+                        <div class="component-grid">
+                            <div class="component">
+                                <div class="component-name">Virtual Network</div>
+                                <div class="component-desc">Isolated network boundary</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Managed Identity</div>
+                                <div class="component-desc">Azure AD authentication</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Key Vault</div>
+                                <div class="component-desc">Secrets management</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Network Policies</div>
+                                <div class="component-desc">Traffic filtering rules</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-box">
+                <strong>💡 Key Concept:</strong> The Container Apps Environment is a secure boundary that hosts one or more container apps. All apps within the same environment share the same virtual network, logs workspace, and can communicate internally without exposing public endpoints.
+            </div>
+        </div>
+        
+        <!-- Components Tab -->
+        <div id="components" class="content-section">
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-title">🚀 Auto-Scaling (KEDA)</div>
+                    <div class="feature-content">
+                        <ul>
+                            <li><strong>HTTP-based:</strong> Scale on request count</li>
+                            <li><strong>CPU/Memory:</strong> Resource-based scaling</li>
+                            <li><strong>Event-driven:</strong> Queue length, Kafka topics</li>
+                            <li><strong>Custom metrics:</strong> Azure Monitor metrics</li>
+                            <li><strong>Scale to zero:</strong> Cost optimization</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-title">🔄 Revisions & Traffic Management</div>
+                    <div class="feature-content">
+                        <ul>
+                            <li><strong>Multiple revisions:</strong> Run different versions simultaneously</li>
+                            <li><strong>Traffic splitting:</strong> A/B testing & canary deployments</li>
+                            <li><strong>Zero-downtime:</strong> Blue-green deployments</li>
+                            <li><strong>Instant rollback:</strong> Revert to previous revision</li>
+                            <li><strong>Revision labels:</strong> Named endpoints per revision</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-title">🌐 Ingress & Networking</div>
+                    <div class="feature-content">
+                        <ul>
+                            <li><strong>Built-in load balancer:</strong> Automatic distribution</li>
+                            <li><strong>HTTPS/TLS:</strong> Automatic SSL certificates</li>
+                            <li><strong>Custom domains:</strong> Your own domain names</li>
+                            <li><strong>Internal/External:</strong> Public or private ingress</li>
+                            <li><strong>CORS support:</strong> Cross-origin configuration</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-title">🔐 Security & Identity</div>
+                    <div class="feature-content">
+                        <ul>
+                            <li><strong>Managed Identity:</strong> Passwordless Azure auth</li>
+                            <li><strong>Key Vault integration:</strong> Secure secrets</li>
+                            <li><strong>VNet integration:</strong> Network isolation</li>
+                            <li><strong>Authentication:</strong> Built-in auth providers</li>
+                            <li><strong>RBAC:</strong> Fine-grained access control</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-title">🎯 Dapr Integration</div>
+                    <div class="feature-content">
+                        <ul>
+                            <li><strong>Service invocation:</strong> Inter-app communication</li>
+                            <li><strong>State management:</strong> Distributed state stores</li>
+                            <li><strong>Pub/Sub messaging:</strong> Event-driven patterns</li>
+                            <li><strong>Bindings:</strong> External system integration</li>
+                            <li><strong>Observability:</strong> Built-in tracing</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-title">📊 Observability</div>
+                    <div class="feature-content">
+                        <ul>
+                            <li><strong>Log Analytics:</strong> Centralized logging</li>
+                            <li><strong>Application Insights:</strong> APM telemetry</li>
+                            <li><strong>Metrics:</strong> Real-time performance data</li>
+                            <li><strong>Distributed tracing:</strong> Request flows</li>
+                            <li><strong>Log streaming:</strong> Real-time console logs</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Examples Tab -->
+        <div id="examples" class="content-section">
+            <div class="example-apps">
+                <div class="app-card">
+                    <div class="app-title">🛒 E-Commerce Microservices Platform</div>
+                    <div class="app-description">
+                        A modern e-commerce platform with separate microservices for catalog, cart, orders, and payments. Each service scales independently based on demand.
+                    </div>
+                    <div class="app-architecture">
+                        <div class="arch-title">Architecture within Container Apps Environment:</div>
+                        <ul>
+                            <li><strong>Frontend App:</strong> React SPA with external ingress, scales 1-10 replicas on HTTP traffic</li>
+                            <li><strong>Catalog API:</strong> Product browsing service, reads from Cosmos DB, caches with Redis</li>
+                            <li><strong>Cart Service:</strong> Uses Dapr state management, session-based scaling</li>
+                            <li><strong>Order Service:</strong> Processes orders, writes to Service Bus queue, uses managed identity</li>
+                            <li><strong>Payment Processor:</strong> Background worker, scales on Service Bus queue depth (KEDA)</li>
+                            <li><strong>Notification Service:</strong> Email/SMS sender, event-driven via Dapr pub/sub</li>
+                        </ul>
+                        <div class="service-list">
+                            <span class="service-tag">Cosmos DB</span>
+                            <span class="service-tag">Redis Cache</span>
+                            <span class="service-tag">Service Bus</span>
+                            <span class="service-tag">SendGrid</span>
+                            <span class="service-tag">Key Vault</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="app-card">
+                    <div class="app-title">📊 Real-Time Analytics Dashboard</div>
+                    <div class="app-description">
+                        IoT data processing platform that ingests sensor data, processes it in real-time, and displays analytics on a dashboard with WebSocket updates.
+                    </div>
+                    <div class="app-architecture">
+                        <div class="arch-title">Architecture within Container Apps Environment:</div>
+                        <ul>
+                            <li><strong>Dashboard UI:</strong> Vue.js SPA with WebSocket connections, auto-scales on concurrent connections</li>
+                            <li><strong>Ingestion API:</strong> Receives IoT data via REST/MQTT, publishes to Event Hubs</li>
+                            <li><strong>Stream Processor:</strong> Reads Event Hubs, aggregates data, KEDA scales on event hub lag</li>
+                            <li><strong>Analytics Engine:</strong> Performs complex calculations, stores in Time Series Insights</li>
+                            <li><strong>WebSocket Service:</strong> Pushes real-time updates to dashboard, uses SignalR</li>
+                            <li><strong>Alert Service:</strong> Monitors thresholds, sends notifications, scales to zero when idle</li>
+                        </ul>
+                        <div class="service-list">
+                            <span class="service-tag">Event Hubs</span>
+                            <span class="service-tag">IoT Hub</span>
+                            <span class="service-tag">Time Series Insights</span>
+                            <span class="service-tag">SignalR</span>
+                            <span class="service-tag">Application Insights</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="app-card">
+                    <div class="app-title">🎬 Video Processing Pipeline</div>
+                    <div class="app-description">
+                        Video upload and processing service that transcodes videos to multiple formats, generates thumbnails, and extracts metadata using serverless jobs.
+                    </div>
+                    <div class="app-architecture">
+                        <div class="arch-title">Architecture within Container Apps Environment:</div>
+                        <ul>
+                            <li><strong>Upload Portal:</strong> Next.js web app, handles file uploads to Blob Storage, external ingress</li>
+                            <li><strong>Job Orchestrator:</strong> Creates processing jobs, splits work into tasks, uses Dapr workflow</li>
+                            <li><strong>Transcoder Service:</strong> FFmpeg container, scales 0-50 on Storage Queue depth (KEDA)</li>
+                            <li><strong>Thumbnail Generator:</strong> Extracts key frames, parallel processing, high CPU allocation</li>
+                            <li><strong>Metadata Extractor:</strong> Uses Azure Video Indexer API, stores in SQL Database</li>
+                            <li><strong>Status API:</strong> Internal service, provides job progress via Dapr service invocation</li>
+                        </ul>
+                        <div class="service-list">
+                            <span class="service-tag">Blob Storage</span>
+                            <span class="service-tag">Storage Queues</span>
+                            <span class="service-tag">Video Indexer</span>
+                            <span class="service-tag">SQL Database</span>
+                            <span class="service-tag">Media Services</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="app-card">
+                    <div class="app-title">🤖 AI Chatbot Platform</div>
+                    <div class="app-description">
+                        Multi-tenant chatbot platform where customers can create and deploy AI-powered chatbots with custom training data and integration capabilities.
+                    </div>
+                    <div class="app-architecture">
+                        <div class="arch-title">Architecture within Container Apps Environment:</div>
+                        <ul>
+                            <li><strong>Admin Portal:</strong> Angular SPA for bot configuration, uses Azure AD B2C authentication</li>
+                            <li><strong>Bot Runtime:</strong> Handles chat messages, scales on request rate, session affinity enabled</li>
+                            <li><strong>NLP Service:</strong> Azure OpenAI integration, uses managed identity, caches responses in Redis</li>
+                            <li><strong>Training Pipeline:</strong> Batch job for model fine-tuning, scales to zero after completion</li>
+                            <li><strong>Integration Hub:</strong> Connects to Slack/Teams/WhatsApp, uses Dapr bindings</li>
+                            <li><strong>Analytics Service:</strong> Conversation analytics, writes to Log Analytics, internal only</li>
+                        </ul>
+                        <div class="service-list">
+                            <span class="service-tag">Azure OpenAI</span>
+                            <span class="service-tag">Cognitive Services</span>
+                            <span class="service-tag">Cosmos DB</span>
+                            <span class="service-tag">Redis Cache</span>
+                            <span class="service-tag">Azure AD B2C</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="app-card">
+                    <div class="app-title">📱 Mobile Backend (BFF Pattern)</div>
+                    <div class="app-description">
+                        Backend-for-Frontend architecture serving iOS, Android, and web clients with tailored APIs, push notifications, and offline sync capabilities.
+                    </div>
+                    <div class="app-architecture">
+                        <div class="arch-title">Architecture within Container Apps Environment:</div>
+                        <ul>
+                            <li><strong>iOS BFF:</strong> Specialized API for iOS app, optimized responses, Apple Push Notifications</li>
+                            <li><strong>Android BFF:</strong> Android-specific endpoints, Firebase Cloud Messaging integration</li>
+                            <li><strong>Web BFF:</strong> Full-featured API for web app, WebSocket support for real-time features</li>
+                            <li><strong>Sync Service:</strong> Handles offline data synchronization, conflict resolution with CRDTs</li>
+                            <li><strong>Push Notification Hub:</strong> Centralizes push notifications, scales on Notification Hub queue</li>
+                            <li><strong>GraphQL Gateway:</strong> Unified data access layer, uses Dapr for service composition</li>
+                        </ul>
+                        <div class="service-list">
+                            <span class="service-tag">Notification Hubs</span>
+                            <span class="service-tag">App Configuration</span>
+                            <span class="service-tag">API Management</span>
+                            <span class="service-tag">Cosmos DB</span>
+                            <span class="service-tag">SignalR</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-box" style="margin-top: 30px;">
+                <strong>🎯 Common Patterns Across Examples:</strong>
+                <ul>
+                    <li><strong>Scale to Zero:</strong> Background jobs and processors only run when needed</li>
+                    <li><strong>Internal Communication:</strong> Services talk via Dapr without exposing public endpoints</li>
+                    <li><strong>Event-Driven:</strong> KEDA scales based on queues, events, and custom metrics</li>
+                    <li><strong>Managed Identity:</strong> Passwordless authentication to Azure services</li>
+                    <li><strong>Blue-Green Deployments:</strong> Traffic splitting enables safe rollouts</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function showTab(tabName) {
+            // Hide all content sections
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(section => section.classList.remove('active'));
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected section and activate tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // Add hover effects to components
+        document.querySelectorAll('.component').forEach(component => {
+            component.addEventListener('click', function() {
+                this.style.background = 'rgba(74, 158, 255, 0.3)';
+                setTimeout(() => {
+                    this.style.background = 'rgba(255,255,255,0.1)';
+                }, 300);
+            });
+        });
+    </script>
+</body>
+</html>
