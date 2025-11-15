@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Events Services</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: auto;
+        }
+        
+        .mindmap-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 40px);
+            padding: 40px;
+        }
+        
+        .mindmap {
+            display: flex;
+            gap: 60px;
+            align-items: center;
+            position: relative;
+        }
+        
+        .central-node {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px 40px;
+            border-radius: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            text-align: center;
+            z-index: 10;
+            min-width: 200px;
+        }
+        
+        .branches {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+        
+        .branch {
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+        
+        .service-node {
+            background: white;
+            padding: 20px 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            min-width: 180px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .service-node:hover {
+            transform: translateX(10px) scale(1.05);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        
+        .service-node h3 {
+            color: #667eea;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .service-node .tagline {
+            color: #666;
+            font-size: 13px;
+            font-style: italic;
+            margin-bottom: 12px;
+        }
+        
+        .details {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            min-width: 350px;
+            max-width: 450px;
+        }
+        
+        .details h4 {
+            color: #764ba2;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+        
+        .details ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .details li {
+            padding: 6px 0;
+            color: #444;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .details li:before {
+            content: "▸ ";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        .scenario {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 12px;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .scenario h5 {
+            color: #1976d2;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .scenario p {
+            color: #555;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .connector {
+            position: absolute;
+            height: 2px;
+            background: rgba(255,255,255,0.3);
+            left: -30px;
+            top: 25px;
+            width: 30px;
+        }
+        
+        @media (max-width: 1200px) {
+            .mindmap {
+                flex-direction: column;
+            }
+            
+            .branches {
+                width: 100%;
+            }
+            
+            .branch {
+                flex-direction: column;
+            }
+            
+            .details {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="mindmap-container">
+        <div class="mindmap">
+            <div class="central-node">
+                Azure<br>Events<br>Services
+            </div>
+            
+            <div class="branches">
+                <!-- Event Grid -->
+                <div class="branch">
+                    <div class="connector"></div>
+                    <div class="service-node">
+                        <h3>Event Grid</h3>
+                        <div class="tagline">Event-Driven Routing</div>
+                    </div>
+                    <div class="details">
+                        <h4>When to Use</h4>
+                        <ul>
+                            <li>Reactive programming with pub-sub</li>
+                            <li>Discrete events, not streaming</li>
+                            <li>Low latency (subsecond)</li>
+                            <li>Pay-per-event pricing</li>
+                        </ul>
+                        <div class="scenario">
+                            <h5>📦 Example: E-commerce Orders</h5>
+                            <p>Order placed → Multiple services react: inventory update, payment processing, email confirmation, analytics logging</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Event Hubs -->
+                <div class="branch">
+                    <div class="connector"></div>
+                    <div class="service-node">
+                        <h3>Event Hubs</h3>
+                        <div class="tagline">High-Throughput Streaming</div>
+                    </div>
+                    <div class="details">
+                        <h4>When to Use</h4>
+                        <ul>
+                            <li>Massive scale (millions events/sec)</li>
+                            <li>Data streaming pipeline</li>
+                            <li>Apache Kafka protocol support</li>
+                            <li>Event retention (1-90 days)</li>
+                        </ul>
+                        <div class="scenario">
+                            <h5>🌐 Example: IoT Telemetry</h5>
+                            <p>100K smart meters → Real-time analytics → Anomaly detection → Historical trend analysis</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Service Bus -->
+                <div class="branch">
+                    <div class="connector"></div>
+                    <div class="service-node">
+                        <h3>Service Bus</h3>
+                        <div class="tagline">Enterprise Messaging</div>
+                    </div>
+                    <div class="details">
+                        <h4>When to Use</h4>
+                        <ul>
+                            <li>Guaranteed FIFO delivery</li>
+                            <li>Transactions & duplicate detection</li>
+                            <li>Message sessions for ordering</li>
+                            <li>Dead-letter queues</li>
+                        </ul>
+                        <div class="scenario">
+                            <h5>🏦 Example: Banking Transactions</h5>
+                            <p>ATM withdrawal → Exactly-once processing → Ordered by account → Audit trail → Duplicate prevention</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Queue Storage -->
+                <div class="branch">
+                    <div class="connector"></div>
+                    <div class="service-node">
+                        <h3>Queue Storage</h3>
+                        <div class="tagline">Simple & Cost-Effective</div>
+                    </div>
+                    <div class="details">
+                        <h4>When to Use</h4>
+                        <ul>
+                            <li>Simple message queuing</li>
+                            <li>Very low cost</li>
+                            <li>Massive storage (200TB+)</li>
+                            <li>Basic REST API</li>
+                        </ul>
+                        <div class="scenario">
+                            <h5>🖼️ Example: Image Processing</h5>
+                            <p>Photo upload → Queue message → Worker polls → Generate thumbnail → Delete message on success</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
